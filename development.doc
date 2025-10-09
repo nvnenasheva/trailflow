@@ -1,0 +1,85 @@
+09.10.2025
+
+1. Initialisation
+
+git clone https://github.com/nvnenasheva/trailflow.git
+cd trialflow
+python -m venv .venv && source .venv/bin/activate
+pip install -U pip
+
+
+2. Create project (basic structure)
+
+mkdir -p src/trialflow app tests notebooks data docker .github/workflows .github/ISSUE_TEMPLATE
+touch src/trialflow/{__init__.py,features.py,train.py,evaluate.py,policy.py,serve.py,app_demo.py,ingest_fhir.py}
+touch tests/{test_features.py,test_metrics.py}
+touch the other files ...
+
+3. Run local demo
+API:
+    make api        # поднимает FastAPI на http://127.0.0.1:8000
+UI:
+    make app        # запускает Streamlit клиент
+Check health:
+    GET http://127.0.0.1:8000/health  -> {"status":"ok"}
+
+----------------------------------------------------------------------------------------------------------------
+Valuable comment with explanation (rus):
+
+1. Trunk-based + ветки + PR - как делать?
+
+ЧТО ЭТО: есть главная ветка main (trunk). 
+Любую работу надо делать в короткой ветке и через Pull Request вливаешь обратно.
+ГДЕ: часть в локальном git, часть - в UI github
+КАК:
+    # локально
+    git checkout -b feat/baseline-logreg
+    # меняешь код, сохраняешь
+    git add -A
+    git commit -m "feat(model): add baseline logistic regression with time split"
+    git push -u origin feat/baseline-logreg
+
+    # далее
+    # "compare & pull request" --> кликаем --> создаем PR в main, ждем ревью --> merge
+
+ИМЕНА ВЕТОК:
+feat/.. - новая фича
+fix/.. - исправление
+chore/.. - рутина
+
+ПРИМЕРЫ: 
+feat/roi-simulator, fix/app-null-check, chore/ci-precommit
+
+ШАБЛОНЫ ДЛЯ КОММИТОВ (единый формат, чтобы далее использовать для changelog):
+<type>(<scope>):<что сделано> 
+
+types:
+    feat - новая функциональность
+    fix - исправление
+    choredocs - рутина
+    refactor - без изменения поведения
+
+пример: feat(api): add /score endpoint and request schema 
+        fix(model): correct calibration threshold
+
+
+2. pre-commit - автопроверки перед комиитом
+ЗАЧЕМ: перед каждым комитом (git commit) автоматически будут запускаться линкеры/форматеры
+ГДЕ: локально
+    make install     # ставит pre-commit и хуки
+    pre-commit run --all-files  # вручную прогнать на всём репо (полезно 1 раз)
+
+Теперь при каждом git commit автоматически крутятся ruff/black/mypy (как настроено в .pre-commit-config.yaml).
+
+3. Labels and Project-board -- как прибраться в задачах
+
+a) Labels (ярлыки для issues/PR) - пока не добавлено
+ГДЕ: GitHub --> Repo --> Issues --> Labels --> New Labels
+КАКИЕ: 
+    type:feature, type:task, type:bug
+    area:model, area:data, area:api, area:app
+    priority:P1, priority:P2, priority:P3   
+    compliance:privacy
+
+b) Project-board (канбан) - не доделано
+колонки: backlog --> next --> in progress --> in review --> done

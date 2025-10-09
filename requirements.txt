@@ -1,0 +1,14 @@
+pandas
+numpy
+scikit-learn
+lightgbm
+xgboost
+optuna
+mlflow
+evidently
+shap
+fastapi
+uvicorn
+streamlit
+pydantic
+pyyaml

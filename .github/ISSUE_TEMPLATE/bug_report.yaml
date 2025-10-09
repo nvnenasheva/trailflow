@@ -1,0 +1,9 @@
+name: Task
+description: Техническая задача
+title: "[task] "
+labels: ["type:task"]
+body:
+- type: textarea
+  attributes: {label: Что сделать}
+- type: textarea
+  attributes: {label: Definition of Done, placeholder: чек-лист}

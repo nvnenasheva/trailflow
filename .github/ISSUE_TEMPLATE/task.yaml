@@ -1,0 +1,11 @@
+name: Feature
+description: Новая функция/эксперимент
+title: "[feat] "
+labels: ["type:feature"]
+body:
+- type: textarea
+  attributes: {label: Описание, placeholder: Что и зачем бизнесу}
+- type: input
+  attributes: {label: Бизнес-метрика, placeholder: ENB, Recall@Top-K, PPV@Top-K}
+- type: textarea
+  attributes: {label: Критерии приёмки (DoD), placeholder: список}
