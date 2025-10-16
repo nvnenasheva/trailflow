@@ -3,7 +3,9 @@
 ## Purpose of this project: to reduce a "no-show" in a medical research study
 
 **What it does:** predicts the risk of missed/late appointments and recommends low-cost actions (reminders, rescheduling, televisits, vouchers).
+
 **Business metric:** *Expected Net Benefit (€ / visit)* = Savings - Costs.
+
 **Who are the users:** Pharma/Biotech (sponsors of the research), clinics, telemedicine, and integrators.
 
 ## Importance:
