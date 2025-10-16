@@ -16,3 +16,6 @@ streamlit
 pydantic
 pyyaml
 pytest
+pandas-stubs
+types-requests
+types-PyYAML
