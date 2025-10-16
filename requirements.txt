@@ -1,3 +1,6 @@
+matplotlib
+jupyter
+nbconvert
 pandas
 numpy
 scikit-learn
@@ -12,3 +15,4 @@ uvicorn
 streamlit
 pydantic
 pyyaml
+pytest

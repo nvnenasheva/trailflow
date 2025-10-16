@@ -81,5 +81,7 @@ a) Labels (ярлыки для issues/PR) - пока не добавлено
     priority:P1, priority:P2, priority:P3   
     compliance:privacy
 
-b) Project-board (канбан) - не доделано
+b) Project-board (канбан) - сделано, но надо связать это с issues in workflow
 колонки: backlog --> next --> in progress --> in review --> done
+
+3) Создание первых Issues - не доделано
