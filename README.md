@@ -11,7 +11,7 @@
 2. Low-cost interventions work, but they need to be targeted (budget is limited).
 3. We optimize the Euro-effect, not just the AUC: we select the top K visits at risk for a given budget.
 
-## Project structure
+## Project structure #TODO
 ```bash
 trialflow/
   README.md
@@ -76,7 +76,6 @@ make eval    # metrics and report (later)
 All of the commands already exist in the `Makefile`. They will write log files into the `reports/` folder. 
 
 
-### Regulation
-Model Card: `reports/model_card.md`
-Drift monitoring — Evidently.
+### Regulation #TODO
+Model Card: 
 
