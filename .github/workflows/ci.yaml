@@ -1,35 +1,42 @@
 name: ci
 on:
-  push: {branches: [main]}
-  pull_request: {branches: [main]}
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
-    - name: Install deps
-      run: |
-        python -m pip install -U pip
-        pip install -r requirements.txt pre-commit ruff mypy pytest
-        pre-commit install-hooks
-    - name: Prepare sample data for CI
-      run: |
-        mkdir -p tests/fixtures data/processed
-        cat > tests/fixtures/sample_kaggle.csv << 'CSV'
-PatientId,AppointmentID,Gender,ScheduledDay,AppointmentDay,Age,Neighbourhood,Scholarship,Hipertension,Diabetes,Alcoholism,Handcap,SMS_received,No-show
-8.2e+14,1,F,2016-04-29T18:38:08Z,2016-05-04T00:00:00Z,62,JARDIM DA PENHA,0,1,0,0,0,0,No
-8.7e+14,2,M,2016-04-29T16:08:27Z,2016-05-04T00:00:00Z,56,JARDIM DA PENHA,0,0,0,0,0,0,Yes
-8.7e+14,3,F,2016-04-29T16:19:04Z,2016-05-04T00:00:00Z,62,MARUÍPE,0,1,1,0,0,1,No
-CSV
-        python src/trialflow/ingest_kaggle.py --input tests/fixtures/sample_kaggle.csv --output data/processed/visits.parquet
-        ls -lh data/processed
-    - name: Lint & typecheck
-      run: |
-        ruff check .
-        mypy src
-    - name: Tests
-      run: pytest -q
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt pre-commit ruff mypy pytest
+          pre-commit install-hooks
+
+      - name: Prepare sample data
+        run: |
+          mkdir -p tests/fixtures data/processed reports notebooks
+          echo ok > reports/.keep
+          # !!!  если нужен маленький CSV для ingest-теста — раскомментируй строки ниже: !!!
+          # cat > tests/fixtures/sample_kaggle.csv << 'CSV'
+          # PatientId,AppointmentID,Gender,ScheduledDay,AppointmentDay,Age,Neighbourhood,Scholarship,Hipertension,Diabetes,Alcoholism,Handcap,SMS_received,No-show
+          # 8.2e+14,1,F,2016-04-29T18:38:08Z,2016-05-04T00:00:00Z,62,JARDIM DA PENHA,0,1,0,0,0,0,No
+          # 8.7e+14,2,M,2016-04-29T16:08:27Z,2016-05-04T00:00:00Z,56,JARDIM DA PENHA,0,0,0,0,0,0,Yes
+          # 8.7e+14,3,F,2016-04-29T16:19:04Z,2016-05-04T00:00:00Z,62,MARUÍPE,0,1,1,0,0,1,No
+          # CSV
+
+      - name: Lint & typecheck
+        run: |
+          ruff check .
+          mypy src
+
+      - name: Tests
+        run: pytest -q
