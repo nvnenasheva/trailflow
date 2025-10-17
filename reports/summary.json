@@ -1,0 +1,39 @@
+{
+  "counts": {
+    "train": 77368,
+    "valid": 16579,
+    "test": 16580
+  },
+  "metrics": {
+    "valid": {
+      "brier": 0.14466374312710423,
+      "ece": 0.019042192230452698,
+      "pr_auc": 0.27799078437742164,
+      "roc_auc": 0.6623315065061677
+    },
+    "test": {
+      "brier": 0.14320272341064552,
+      "ece": 0.019969964052585783,
+      "pr_auc": 0.2951657910922082,
+      "roc_auc": 0.6707393872700579
+    }
+  },
+  "best_policy": {
+    "K_percent": 50,
+    "ENB_test": 107219.96635641887,
+    "Recall@K_test": 0.7055937193326791,
+    "PPV@K_test": 0.26019300361881786
+  },
+  "artifacts": {
+    "model": "models\\baseline_calibrated.pkl",
+    "metrics_csv": "reports\\metrics.csv",
+    "biz_valid_csv": "reports\\business_valid.csv",
+    "biz_test_csv": "reports\\business_test.csv",
+    "roi_plot": "reports\\roi_curve.png"
+  },
+  "assumptions": {
+    "COST_NO_SHOW": 200.0,
+    "COST_INTERVENTION": 1.5,
+    "UPLIFT_RATE": 0.3
+  }
+}

@@ -3,7 +3,7 @@ jupyter
 nbconvert
 pandas
 numpy
-scikit-learn
+scikit-learn>=1.4,<1.7 # for CalibratedClassifierCV
 lightgbm
 xgboost
 optuna
@@ -19,3 +19,4 @@ pytest
 pandas-stubs
 types-requests
 types-PyYAML
+joblib
