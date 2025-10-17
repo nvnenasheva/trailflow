@@ -42,28 +42,32 @@ Assumptions:
 Модель: логрег с L2, max_iter=300
 Калибровка: Platt (CalibratedClassifierCV(method="sigmoid"))
 """
-#from __future__ import annotations
-import argparse, json
+
+import argparse
+import json
 from pathlib import Path
+
+import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-# headless для CI/серверов
-import matplotlib
-from sklearn import base
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import roc_auc_score, average_precision_score, brier_score_loss
-import joblib
+from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    average_precision_score,
+    brier_score_loss,
+    roc_auc_score,
+)
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+# from __future__ import annotations
 
 
-def expected_calibration_error(y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10) -> float:
+def expected_calibration_error(
+    y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10
+) -> float:
     bins = np.linspace(0.0, 1.0, n_bins + 1)
     ece = 0.0
     for i in range(n_bins):
@@ -129,8 +133,10 @@ def main():
     args = ap.parse_args()
 
     data_path = Path(args.input)
-    reports_dir = Path(args.reports_dir); reports_dir.mkdir(parents=True, exist_ok=True)
-    model_path = Path(args.model); model_path.parent.mkdir(parents=True, exist_ok=True)
+    reports_dir = Path(args.reports_dir)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    model_path = Path(args.model)
+    model_path.parent.mkdir(parents=True, exist_ok=True)
 
     # 1) Данные
     df = pd.read_parquet(data_path).sort_values("date").reset_index(drop=True)
@@ -138,8 +144,16 @@ def main():
     target = "no_show"
     num_cols = ["age", "weekday", "lead_time_days"]
     cat_cols = [
-        "is_first_visit", "site_id", "visit_type", "sms_received",
-        "scholarship", "hipertension", "diabetes", "alcoholism", "handicap", "gender",
+        "is_first_visit",
+        "site_id",
+        "visit_type",
+        "sms_received",
+        "scholarship",
+        "hipertension",
+        "diabetes",
+        "alcoholism",
+        "handicap",
+        "gender",
     ]
 
     X = df[num_cols + cat_cols]
@@ -151,7 +165,7 @@ def main():
     n_valid = int(0.85 * n)
     X_train, y_train = X.iloc[:n_train], y[:n_train]
     X_valid, y_valid = X.iloc[n_train:n_valid], y[n_train:n_valid]
-    X_test,  y_test  = X.iloc[n_valid:], y[n_valid:]
+    X_test, y_test = X.iloc[n_valid:], y[n_valid:]
 
     # 3) Пайплайн: препроцессинг + логрег
     preprocess = ColumnTransformer(
@@ -160,8 +174,8 @@ def main():
             ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
         ]
     )
-    base = Pipeline([("prep", preprocess), ("clf", LogisticRegression(max_iter=300))])
-    base.fit(X_train, y_train)
+    pipe = Pipeline([("prep", preprocess), ("clf", LogisticRegression(max_iter=300))])
+    pipe.fit(X_train, y_train)
 
     # 4) Калибровка вероятностей (Platt) на валидации
     """ модель выдает скоры (0..1), но они не обязаны быть настояшими вероятностями.
@@ -174,18 +188,18 @@ def main():
 
     # base_estimator VS estimator
     try:
-        # sklearn>=1.6: используем FrozenEstimator, чтобы не переобучать base
+        # sklearn>=1.6: используем FrozenEstimator, чтобы не переобучать pipe
         from sklearn.frozen import FrozenEstimator
-        cal = CalibratedClassifierCV(estimator=FrozenEstimator(base), method="sigmoid")
+
+        cal = CalibratedClassifierCV(estimator=FrozenEstimator(pipe), method="sigmoid")
     except ImportError:
         # совместимость со старыми версиями sklearn
-        cal = CalibratedClassifierCV(estimator=base, method="sigmoid", cv="prefit")
-
+        cal = CalibratedClassifierCV(estimator=pipe, method="sigmoid", cv="prefit")
 
     cal.fit(X_valid, y_valid)
 
     proba_valid = cal.predict_proba(X_valid)[:, 1]
-    proba_test  = cal.predict_proba(X_test)[:, 1]
+    proba_test = cal.predict_proba(X_test)[:, 1]
 
     """Почему это важно для бизнеса?
     - ML-метрики (ROC AUC, PR AUC) не зависят от калибровки, т.к. ранжируют объекты
@@ -195,20 +209,29 @@ def main():
 
     # 5) ML-метрики
     metrics = {
-        ("valid", "roc_auc"): roc_auc_score(y_valid, proba_valid), # измеряет, насколько хорошо модель ранжирует объекты, чем выше — тем лучше (не зависит от порога классификации)
-        ("valid", "pr_auc"):  average_precision_score(y_valid, proba_valid), # полезна при дисбалансе классов, чем выше — тем лучше (ловит редкие no-show)
-        ("valid", "brier"):   brier_score_loss(y_valid, proba_valid), # среднеквадратичная ошибка вероятностей, чем ниже — тем лучше
-        ("valid", "ece"):     expected_calibration_error(y_valid, proba_valid), # насколько хорошо откалиброваны вероятности, чем ниже — тем лучше
-        ("test",  "roc_auc"): roc_auc_score(y_test,  proba_test),
-        ("test",  "pr_auc"):  average_precision_score(y_test,  proba_test),
-        ("test",  "brier"):   brier_score_loss(y_test,  proba_test),
-        ("test",  "ece"):     expected_calibration_error(y_test,  proba_test),
+        ("valid", "roc_auc"): roc_auc_score(
+            y_valid, proba_valid
+        ),  # измеряет, насколько хорошо модель ранжирует объекты, чем выше — тем лучше (не зависит от порога классификации)
+        ("valid", "pr_auc"): average_precision_score(
+            y_valid, proba_valid
+        ),  # полезна при дисбалансе классов, чем выше — тем лучше (ловит редкие no-show)
+        ("valid", "brier"): brier_score_loss(
+            y_valid, proba_valid
+        ),  # среднеквадратичная ошибка вероятностей, чем ниже — тем лучше
+        ("valid", "ece"): expected_calibration_error(
+            y_valid, proba_valid
+        ),  # насколько хорошо откалиброваны вероятности, чем ниже — тем лучше
+        ("test", "roc_auc"): roc_auc_score(y_test, proba_test),
+        ("test", "pr_auc"): average_precision_score(y_test, proba_test),
+        ("test", "brier"): brier_score_loss(y_test, proba_test),
+        ("test", "ece"): expected_calibration_error(y_test, proba_test),
     }
     # используем явные имена для уровней
     s = pd.Series(metrics)
     s.index = pd.MultiIndex.from_tuples(s.index, names=["split", "metric"])
-    metrics_df = s.unstack("split").reset_index()  # гарантированно есть колонка 'metric'
-
+    metrics_df = s.unstack(
+        "split"
+    ).reset_index()  # гарантированно есть колонка 'metric'
 
     # 6) Бизнес-метрики
     """ У нас есть бюджет/ресурс (например, отправка SMS или звонок), который ограничен, поэтому будем таргетировать на самых рискованных на таргетирование K% пациентов.
@@ -220,13 +243,22 @@ def main():
         - ENB (ожидаемая чистая выгода), 
         - Recall@K (какую долю всех no-show мы поймали среди таргетируемых),
         - PPV@K (точность таргетирования среди таргетируемых -- сколько таргетируемых реально оказались no-show) """
-    
+
     topk = list(range(5, 55, 5))
-    #uplift_rate -- оценка, насколько интервенция (напоминание/телевизит/ваучер) снижает no-show, напр. 30%
-    biz_valid = business_table(y_valid, proba_valid, topk, args.cost_no_show, args.cost_intervention, args.uplift)
-    biz_test  = business_table(y_test,  proba_test,  topk, args.cost_no_show, args.cost_intervention, args.uplift)
+    # uplift_rate -- оценка, насколько интервенция (напоминание/телевизит/ваучер) снижает no-show, напр. 30%
+    biz_valid = business_table(
+        y_valid,
+        proba_valid,
+        topk,
+        args.cost_no_show,
+        args.cost_intervention,
+        args.uplift,
+    )
+    biz_test = business_table(
+        y_test, proba_test, topk, args.cost_no_show, args.cost_intervention, args.uplift
+    )
     biz_valid_csv = reports_dir / "business_valid.csv"
-    biz_test_csv  = reports_dir / "business_test.csv"
+    biz_test_csv = reports_dir / "business_test.csv"
     biz_valid.to_csv(biz_valid_csv, index=False)
     biz_test.to_csv(biz_test_csv, index=False)
 
@@ -237,13 +269,14 @@ def main():
     # 7) ROI-кривая
     plt.figure()
     plt.plot(biz_valid["K_percent"], biz_valid["ENB_euros"], marker="o", label="valid")
-    plt.plot(biz_test["K_percent"],  biz_test["ENB_euros"],  marker="o", label="test")
+    plt.plot(biz_test["K_percent"], biz_test["ENB_euros"], marker="o", label="test")
     plt.xlabel("Target budget K (%)")
     plt.ylabel("Expected Net Benefit (€)")
     plt.title("ROI curve — ENB vs Top-K%")
     plt.legend()
     roi_path = reports_dir / "roi_curve.png"
-    plt.savefig(roi_path, bbox_inches="tight"); plt.close()
+    plt.savefig(roi_path, bbox_inches="tight")
+    plt.close()
 
     # 8) Сохранить модель и summary
     joblib.dump(cal, model_path)
@@ -252,10 +285,14 @@ def main():
     metrics_df.to_csv(metrics_csv, index=False)
 
     valid_dict = metrics_df.set_index("metric")["valid"].astype(float).to_dict()
-    test_dict  = metrics_df.set_index("metric")["test"].astype(float).to_dict()
+    test_dict = metrics_df.set_index("metric")["test"].astype(float).to_dict()
 
     summary = {
-        "counts": {"train": int(len(X_train)), "valid": int(len(X_valid)), "test": int(len(X_test))},
+        "counts": {
+            "train": int(len(X_train)),
+            "valid": int(len(X_valid)),
+            "test": int(len(X_test)),
+        },
         "metrics": {"valid": valid_dict, "test": test_dict},
         "best_policy": {
             "K_percent": best_k,

@@ -23,6 +23,7 @@ Usage:
 - Разные методы калибровки (sigmoid vs isotonic) могут давать разные результаты в зависимости от данных и модели    
 
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,6 +35,7 @@ import pandas as pd
 
 # headless-отрисовка (важно для CI/серверов)
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -74,7 +76,9 @@ def make_splits(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
 def reliability_table(
     y_true: np.ndarray, y_prob: np.ndarray, n_bins: int
 ) -> pd.DataFrame:
-    prob_true, prob_pred = calibration_curve(y_true, y_prob, n_bins=n_bins, strategy="uniform")
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_prob, n_bins=n_bins, strategy="uniform"
+    )
     return pd.DataFrame({"bin_pred": prob_pred, "bin_true": prob_true})
 
 
@@ -123,20 +127,21 @@ def main() -> None:
             ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
         ]
     )
-    base = Pipeline([("prep", preprocess), ("clf", LogisticRegression(max_iter=300))])
-    base.fit(X_train, y_train)
+    pipe = Pipeline([("prep", preprocess), ("clf", LogisticRegression(max_iter=300))])
+    pipe.fit(X_train, y_train)
 
     # 3) Предсказания "до калибровки" (на тесте)
-    proba_uncal = base.predict_proba(X_test)[:, 1]
+    proba_uncal = pipe.predict_proba(X_test)[:, 1]
 
     # 4) Калибровка Platt/Isotonic на валидации (cv="prefit")
     try:
         # sklearn>=1.6: используем FrozenEstimator, чтобы не переобучать base
         from sklearn.frozen import FrozenEstimator
-        cal = CalibratedClassifierCV(estimator=FrozenEstimator(base), method="sigmoid")
+
+        cal = CalibratedClassifierCV(estimator=FrozenEstimator(pipe), method="sigmoid")
     except ImportError:
         # совместимость со старыми версиями sklearn
-        cal = CalibratedClassifierCV(estimator=base, method="sigmoid", cv="prefit")
+        cal = CalibratedClassifierCV(estimator=pipe, method="sigmoid", cv="prefit")
 
     cal.fit(X_valid, y_valid)
 
@@ -160,8 +165,18 @@ def main() -> None:
     # линия идеала
     plt.plot([0, 1], [0, 1], linestyle="--", linewidth=1)
     # до/после
-    plt.plot(tab_uncal["bin_pred"], tab_uncal["bin_true"], marker="o", label=f"Uncal (Brier={brier_uncal:.3f}, ECE={ece_uncal:.3f})")
-    plt.plot(tab_cal["bin_pred"], tab_cal["bin_true"], marker="o", label=f"Calibrated-{args.method} (Brier={brier_cal:.3f}, ECE={ece_cal:.3f})")
+    plt.plot(
+        tab_uncal["bin_pred"],
+        tab_uncal["bin_true"],
+        marker="o",
+        label=f"Uncal (Brier={brier_uncal:.3f}, ECE={ece_uncal:.3f})",
+    )
+    plt.plot(
+        tab_cal["bin_pred"],
+        tab_cal["bin_true"],
+        marker="o",
+        label=f"Calibrated-{args.method} (Brier={brier_cal:.3f}, ECE={ece_cal:.3f})",
+    )
     plt.xlabel("Predicted probability (bin mean)")
     plt.ylabel("Observed frequency")
     plt.title("Reliability diagram (test)")
@@ -183,10 +198,13 @@ def main() -> None:
         "artifacts": {
             "diagram_png": str(out_png),
             "reliability_uncal_csv": str(reports_dir / "reliability_uncal.csv"),
-            "reliability_calibrated_csv": str(reports_dir / "reliability_calibrated.csv"),
+            "reliability_calibrated_csv": str(
+                reports_dir / "reliability_calibrated.csv"
+            ),
         },
     }
     import json
+
     with open(reports_dir / "calibration_summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
     print(json.dumps(summary, indent=2))
