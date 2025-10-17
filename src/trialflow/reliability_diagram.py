@@ -118,7 +118,7 @@ def main() -> None:
     X_valid = valid[num_cols + cat_cols]
     y_valid = valid[target].astype(int).values
     X_test = test[num_cols + cat_cols]
-    y_test = test[target].astype(int).values
+    y_test = test[target].astype(int).values # <-- Уже np.ndarray
 
     # 2) Модель: препроцессинг + логрег
     preprocess = ColumnTransformer(
@@ -148,15 +148,25 @@ def main() -> None:
     # 5) Предсказания "после калибровки" (на тесте)
     proba_cal = cal.predict_proba(X_test)[:, 1]
 
+    # *. Преобразуем в np.ndarray для совместимости с более старыми версиями sklearn
+    y_test_np = np.asarray(y_test)
+    proba_uncal_np = np.asarray(proba_uncal)
+    proba_cal_np = np.asarray(proba_cal)
+
     # 6) Метрики калибровки (Brier/ECE) на тесте
     brier_uncal = brier_score_loss(y_test, proba_uncal)
     brier_cal = brier_score_loss(y_test, proba_cal)
-    ece_uncal = expected_calibration_error(y_test, proba_uncal, n_bins=args.bins)
-    ece_cal = expected_calibration_error(y_test, proba_cal, n_bins=args.bins)
+    # Используем чистые массивы np.ndarray
+    #ece_uncal = expected_calibration_error(y_test, proba_uncal, n_bins=args.bins)
+    #ece_cal = expected_calibration_error(y_test, proba_cal, n_bins=args.bins)
+    ece_uncal = expected_calibration_error(y_test_np, proba_uncal_np, n_bins=args.bins)
+    ece_cal = expected_calibration_error(y_test_np, proba_cal_np, n_bins=args.bins)
 
     # 7) Таблицы reliability
-    tab_uncal = reliability_table(y_test, proba_uncal, args.bins)
-    tab_cal = reliability_table(y_test, proba_cal, args.bins)
+    #tab_uncal = reliability_table(y_test, proba_uncal, args.bins)
+    #tab_cal = reliability_table(y_test, proba_cal, args.bins)
+    tab_uncal = reliability_table(y_test_np, proba_uncal_np, args.bins)
+    tab_cal = reliability_table(y_test_np, proba_cal_np, args.bins)
     tab_uncal.to_csv(reports_dir / "reliability_uncal.csv", index=False)
     tab_cal.to_csv(reports_dir / "reliability_calibrated.csv", index=False)
 
