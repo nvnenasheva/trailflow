@@ -1,9 +1,9 @@
-# Model Card — TrialFlow
+# Model Card --  TrialFlow
 **Purpose:** Predicting the risk of missed appointments and suggesting low-cost actions (reminders, rescheduling, televisits).
 **Not for:** Clinical diagnostics/treatment. Decisions -- auxiliary (human-in-the-loop).
 
 ## Data
-Synthea synthetics / public no-show; aggregated features: weekday, lead_time_days, is_first_visit, site_id (pseudo).
+Synthea synthetics/public no-show; aggregated features: weekday, lead_time_days, is_first_visit, site_id (pseudo).
 
 ## Training
 Split by time; models: Logistic/LightGBM; calibration (Platt/Isotonic). Tracking: MLflow run_id + git SHA + DVC hash.
