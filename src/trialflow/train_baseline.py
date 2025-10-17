@@ -1,48 +1,3 @@
-"""
-train_baseline.py -- time-aware baseline + business metrics
-
-Usage:
-  python src/trialflow/train_baseline.py \
-    --input data/processed/visits.parquet \
-    --model models/baseline_calibrated.pkl \
-    --reports-dir reports \
-    --cost-no-show 200 --cost-intervention 1.5 --uplift 0.30
-
-Idea:
-- Create a time-aware baseline model to predict no-shows
-- Evaluate the model using both ML and business metrics
-
-Main steps
-1) Load data (data/processed/visits.parquet)
-2) Time-aware split 70/15/15
-3) Preprocessing + Logistic Regression baseline
-4) Calibration (Platt) on validation
-5) ML metrics: ROC AUC, PR AUC, Brier, ECE
-6) Business metrics: ENB, Recall@K, PPV@K
-7) ROI curve
-8) Save model, metrics, summary (JSON)
-
-Assumptions:
-- cost_no_show: e.g. 200€
-- cost_intervention: e.g. 1.5€ (SMS, call)
-- uplift: e.g. 0.30 (30% relative reduction of no-show in targeted group)
-"""
-
-"""
-Признаки:
-- числовые: age, weekday, lead_time_days;
-- категориальные: is_first_visit, site_id, visit_type, sms_received,
-  scholarship, hipertension, diabetes, alcoholism, handicap, gender
-
-  Делаем timne-aware split 70/15/15 по дате визита:
-- train: 70% первых визитов
-- valid: следующие 15%
-- test: последние 15%
-
-Модель: логрег с L2, max_iter=300
-Калибровка: Platt (CalibratedClassifierCV(method="sigmoid"))
-"""
-
 import argparse
 import json
 from pathlib import Path
@@ -381,3 +336,50 @@ Note:
 2. Если валидация маленькая/шумная — оставайся на sigmoid (стабильнее).
 
 """
+
+
+"""
+train_baseline.py -- time-aware baseline + business metrics
+
+Usage:
+  python src/trialflow/train_baseline.py \
+    --input data/processed/visits.parquet \
+    --model models/baseline_calibrated.pkl \
+    --reports-dir reports \
+    --cost-no-show 200 --cost-intervention 1.5 --uplift 0.30
+
+Idea:
+- Create a time-aware baseline model to predict no-shows
+- Evaluate the model using both ML and business metrics
+
+Main steps
+1) Load data (data/processed/visits.parquet)
+2) Time-aware split 70/15/15
+3) Preprocessing + Logistic Regression baseline
+4) Calibration (Platt) on validation
+5) ML metrics: ROC AUC, PR AUC, Brier, ECE
+6) Business metrics: ENB, Recall@K, PPV@K
+7) ROI curve
+8) Save model, metrics, summary (JSON)
+
+Assumptions:
+- cost_no_show: e.g. 200€
+- cost_intervention: e.g. 1.5€ (SMS, call)
+- uplift: e.g. 0.30 (30% relative reduction of no-show in targeted group)
+"""
+
+"""
+Признаки:
+- числовые: age, weekday, lead_time_days;
+- категориальные: is_first_visit, site_id, visit_type, sms_received,
+  scholarship, hipertension, diabetes, alcoholism, handicap, gender
+
+  Делаем timne-aware split 70/15/15 по дате визита:
+- train: 70% первых визитов
+- valid: следующие 15%
+- test: последние 15%
+
+Модель: логрег с L2, max_iter=300
+Калибровка: Platt (CalibratedClassifierCV(method="sigmoid"))
+"""
+# from __future__ import annotations
