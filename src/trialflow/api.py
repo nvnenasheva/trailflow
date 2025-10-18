@@ -1,15 +1,14 @@
 # src/trialflow/api.py
-# src/trialflow/api.py
-from dotenv import load_dotenv
-import os
 # загружаем .env (по умолчанию из корня проекта); можно переопределить через ENV_FILE
-load_dotenv(os.getenv("ENV_FILE", ".env"))
+#load_dotenv(os.getenv("ENV_FILE", ".env"))
+
 
 from fastapi import FastAPI, Depends, Query, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from typing import List, Union
 import time
+import os
 
 from .model_io import get_version
 from .schemas import Visit, ScoreResponse

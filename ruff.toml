@@ -1,0 +1,7 @@
+# other_scripts/… не участвует в проде, просто исключим её у ruff
+
+line-length = 100
+extend-exclude = [
+  "other_scripts/**",   # папка с пробелом — ок
+  "model/notebooks/**",
+]
