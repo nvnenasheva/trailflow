@@ -1,7 +1,53 @@
+18.10.2025
+решала вопрос с безопасностью через API_KEY and SIG_SECRET (.env, который указан также в .getignore)
+
+данные сохранены в .env, будут использованы при запуске app
+
+!!! КАК ТЕСТИРОВАТЬ И ДЕМОНСТРИРОВАТЬ!!!
+--------------------------------------------------------------------------------------------------------------
+ЗАПУСКАЕМ FastAPI:
+  uvicorn src.trialflow.api:app --host 0.0.0.0 --port 8000 --workers 1 --env-file .env
+  ==> open http://127.0.0.1:8000/
+--------------------------------------------------------------------------------------------------------------
+ЗАПУСК ngrok для предоставления доступа к демо: 
+  ngrok http 8000 --basic-auth "demo:demo12345" ==> для входа понадобится username deno and password demo12345
+  API_KEY=LFEgJA5onY88K0KvGBdDPJi7gjGWtQWuI8N0oAskp93-rPbHLKGIQK-XLSD8ucdU
+--------------------------------------------------------------------------------------------------------------
+
 17.10.2025
 закончила с train_baseline.py
 разобралась с метриками и предположениями
-нужно напис
+нужно отладить app and FastAPI
+
+# Установки
+pip install fastapi uvicorn[standard] joblib pandas pydantic
+
+# Запуск (из корня проекта)
+export MODEL_PATH=models/baseline_calibrated.pkl
+uvicorn src.trialflow.serve_baseline:app --host 0.0.0.0 --port 8000 --workers 1
+
+# Проверка
+# 1) healthcheck
+curl -s -i http://localhost:8000/ping
+
+# 2) один визит
+curl -s -X POST http://localhost:8000/score \
+  -H "Content-Type: application/json" \
+  -d '{
+    "age": 57, "weekday": 1, "lead_time_days": 5, "is_first_visit": 0,
+    "site_id": "S001", "visit_type": "visit", "sms_received": 1,
+    "scholarship": 0, "hipertension": 1, "diabetes": 0,
+    "alcoholism": 0, "handicap": 0, "gender": "F"
+  }'
+
+# 3) батч и топ-10%
+curl -s -X POST "http://localhost:8000/score?k=10" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"age":40,"weekday":1,"lead_time_days":2,"is_first_visit":1,"site_id":"S001","visit_type":"visit","sms_received":1,"scholarship":0,"hipertension":0,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"M"},
+    {"age":65,"weekday":2,"lead_time_days":14,"is_first_visit":0,"site_id":"S002","visit_type":"visit","sms_received":0,"scholarship":1,"hipertension":1,"diabetes":1,"alcoholism":0,"handicap":0,"gender":"F"}
+  ]'
+
 
 ===================================================================================================================================================
 

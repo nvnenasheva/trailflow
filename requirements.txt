@@ -13,10 +13,11 @@ shap
 fastapi
 uvicorn
 streamlit
-pydantic
+pydantic>=2
 pyyaml
 pytest
 pandas-stubs
 types-requests
 types-PyYAML
 joblib
+python-dotenv

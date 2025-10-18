@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TrialFlow — No-Show Demo</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:ui-sans-serif,system-ui,Arial;padding:24px;background:#0f172a;color:#e2e8f0}
+    .card{max-width:1200px;margin:0 auto;background:#111827;border:1px solid #1f2937;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    h1{margin:0 0 8px;font-size:28px}
+    .muted{color:#94a3b8}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    label{font-size:12px;color:#94a3b8;margin-bottom:6px;display:block}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e2e8f0}
+    textarea{resize:vertical}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .btn{padding:12px 16px;border-radius:12px;border:1px solid #334155;background:#0ea5e9;color:#022336;font-weight:600;cursor:pointer}
+    .btn.secondary{background:#1f2937;color:#e2e8f0}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .badge{display:inline-block;padding:2px 8px;border:1px solid #334155;border-radius:999px;font-size:12px;margin-left:8px}
+    .tabs{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+    .tab{padding:6px 10px;border:1px solid #334155;border-radius:999px;cursor:pointer;background:#0b1220;user-select:none}
+    .tab.active{background:#0ea5e9;color:#022336;border-color:#0ea5e9;font-weight:700}
+    .subtabs{display:flex;gap:6px;margin:8px 0 12px}
+    .subtab{padding:4px 8px;border:1px solid #334155;border-radius:999px;cursor:pointer;background:#0b1220;font-size:12px;user-select:none}
+    .subtab.active{background:#22d3ee;color:#022336;border-color:#22d3ee;font-weight:700}
+    .hidden{display:none}
+    .section{margin-top:16px}
+    .spacer{flex:1}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .visually-hidden{
+      position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;border:0;
+      overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;
+    }
+    /* table */
+    table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:12px;border:1px solid #334155}
+    thead th{position:sticky;top:0;background:#0b1220;padding:10px 12px;font-size:12px;color:#94a3b8;text-align:left;border-bottom:1px solid #334155}
+    tbody td{padding:10px 12px;border-bottom:1px solid #1f2937}
+    tbody tr:nth-child(even){background:#0f1a2e}
+    tbody tr.highlight{outline:1px solid #22d3ee;outline-offset:-1px;background:rgba(34,211,238,.08)}
+    .chip{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #334155;font-size:12px}
+    .chip.ok{background:#0d3d33;color:#10b981;border-color:#065f46}
+    .chip.muted{color:#94a3b8}
+    /* progress bar */
+    .pbar{height:10px;background:#0b1220;border:1px solid #334155;border-radius:999px;overflow:hidden}
+    .pfill{height:100%;background:linear-gradient(90deg,#22d3ee,#0ea5e9)}
+    /* result */
+    .res-head{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+    .kv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}
+    .kv .box{background:#0b1220;border:1px solid #334155;border-radius:12px;padding:12px}
+    .kv .h{font-size:12px;color:#94a3b8;margin-bottom:4px}
+    .toggle{color:#38bdf8;cursor:pointer;text-decoration:underline}
+    pre.out{white-space:pre-wrap;background:#0b1220;border:1px solid #334155;border-radius:12px;padding:14px;overflow:auto;margin-top:10px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>TrialFlow — No-Show Probability & ROI</h1>
+    <div class="muted">Demo scoring and business impact (ENB/ROI). Switch mode below.</div>
+
+    <div class="row" style="margin-top:12px">
+      <button id="btnPing" class="btn">Check Server</button>
+      <span id="modelVer" class="badge">model: —</span>
+      <span id="status" class="badge">status: —</span>
+    </div>
+
+    <!-- Top-level tabs -->
+    <div class="tabs">
+      <div id="tabSingle" class="tab active">Single Visit</div>
+      <div id="tabBatch" class="tab">Batch (JSON / CSV)</div>
+      <div id="tabROI" class="tab">ROI / ENB</div>
+    </div>
+
+    <!-- SINGLE -->
+    <div id="singleForm">
+      <div class="grid">
+        <div><label>age</label><input id="age" type="number" value="57" min="0" max="120"></div>
+        <div><label>weekday (0..6)</label><input id="weekday" type="number" value="1" min="0" max="6"></div>
+        <div><label>lead_time_days</label><input id="lead" type="number" value="5" min="0"></div>
+        <div><label>is_first_visit</label><select id="first"><option value="0">0</option><option value="1">1</option></select></div>
+        <div><label>site_id</label><input id="site" value="S001"></div>
+        <div><label>visit_type</label><input id="vtype" value="visit"></div>
+        <div><label>sms_received</label><select id="sms"><option>0</option><option selected>1</option></select></div>
+        <div><label>scholarship</label><select id="sch"><option selected>0</option><option>1</option></select></div>
+        <div><label>hipertension</label><select id="hyp"><option>0</option><option selected>1</option></select></div>
+        <div><label>diabetes</label><select id="dia"><option selected>0</option><option>1</option></select></div>
+        <div><label>alcoholism</label><select id="alc"><option selected>0</option><option>1</option></select></div>
+        <div><label>handicap</label><select id="hand"><option selected>0</option><option>1</option></select></div>
+        <div><label>gender (M/F/U)</label><input id="gender" value="F"></div>
+        <div><label>Top-K% within batch</label><input id="ktop" type="number" value="10" min="0" max="100"></div>
+      </div>
+    </div>
+
+    <!-- BATCH -->
+    <div id="batchForm" class="hidden">
+      <label>Paste a JSON array of visits (or CSV with the header below). JSON example:</label>
+      <textarea id="batch" rows="10" placeholder='[
+  {"age":22,"weekday":1,"lead_time_days":60,"is_first_visit":1,"site_id":"S101","visit_type":"visit","sms_received":0,"scholarship":1,"hipertension":0,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"U"},
+  {"age":31,"weekday":5,"lead_time_days":45,"is_first_visit":1,"site_id":"S102","visit_type":"visit","sms_received":0,"scholarship":0,"hipertension":1,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"F"}
+]'></textarea>
+
+      <div class="row" style="margin-top:8px">
+        <input type="file" id="batchFile" accept=".json,.csv,application/json,text/csv" class="visually-hidden" aria-label="Upload JSON or CSV">
+        <button id="btnUpload" class="btn secondary" type="button">Upload JSON/CSV</button>
+        <span id="fileName" class="muted">No file chosen</span>
+
+        <button id="btnSample" class="btn secondary" type="button">Insert Sample</button>
+        <div class="spacer"></div>
+        <div style="min-width:220px">
+          <label>Top-K% within batch</label>
+          <input id="ktopBatch" type="number" value="30" min="0" max="100">
+        </div>
+      </div>
+
+      <div class="muted" style="margin-top:6px">
+        CSV header must include (comma or semicolon separated):<br>
+        <span class="mono">age,weekday,lead_time_days,is_first_visit,site_id,visit_type,sms_received,scholarship,hipertension,diabetes,alcoholism,handicap,gender</span>
+      </div>
+
+      <div id="batchInfo" class="muted" style="margin-top:6px">Rows in batch: —</div>
+    </div>
+
+    <!-- ROI / ENB -->
+    <div id="roiForm" class="hidden">
+      <div class="subtabs">
+        <div id="subSingle" class="subtab active">Single Action</div>
+        <div id="subBest" class="subtab">Best Action (JSON/CSV)</div>
+      </div>
+
+      <!-- Single Action -->
+      <div id="roiSingle">
+        <div class="grid">
+          <div><label>n — number of visits in period</label><input id="roi_n" type="number" value="200" min="1"></div>
+          <div><label>L — loss per no-show (€)</label><input id="roi_L" type="number" value="350" min="0" step="0.01"></div>
+          <div><label>pi — no-show probability in targeted group (prefer)</label><input id="roi_pi" type="number" value="0.50" min="0" max="1" step="0.0001"></div>
+          <div><label>base_p — baseline no-show probability (fallback)</label><input id="roi_base" type="number" placeholder="optional" min="0" max="1" step="0.0001"></div>
+          <div><label>uplift — relative risk reduction (0..1)</label><input id="roi_uplift" type="number" value="0.35" min="0" max="1" step="0.0001"></div>
+          <div><label>cost — intervention cost (€)</label><input id="roi_cost" type="number" value="6" min="0" step="0.01"></div>
+          <div><label>budget — total per period (€)</label><input id="roi_budget" type="number" value="1200" min="0" step="0.01"></div>
+          <div><label>k — share targeted (0..1)</label><input id="roi_k" type="number" placeholder="auto if Optimize k is on" min="0" max="1" step="0.0001"></div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <label class="row" style="gap:6px;align-items:center">
+            <input id="roi_optk" type="checkbox" checked>
+            <span class="muted">Optimize k (respect budget)</span>
+          </label>
+          <div class="spacer"></div>
+          <button id="btnENB" class="btn" type="button">Compute ENB</button>
+        </div>
+
+        <div id="roiSingleNice" class="section hidden"></div>
+        <div id="roiSingleRawWrap" class="section hidden">
+          <span class="toggle" id="toggleRoiSingleRaw">Show raw JSON</span>
+          <pre id="roiSingleRaw" class="out hidden"></pre>
+        </div>
+      </div>
+
+      <!-- Best Action -->
+      <div id="roiBest" class="hidden">
+        <div class="grid">
+          <div><label>n — number of visits in period</label><input id="best_n" type="number" value="200" min="1"></div>
+          <div><label>L — loss per no-show (€)</label><input id="best_L" type="number" value="350" min="0" step="0.01"></div>
+          <div><label>pi — targeted no-show probability (prefer)</label><input id="best_pi" type="number" value="0.50" min="0" max="1" step="0.0001"></div>
+          <div><label>base_p — baseline no-show probability (fallback)</label><input id="best_base" type="number" placeholder="optional" min="0" max="1" step="0.0001"></div>
+          <div><label>budget — total per period (€)</label><input id="best_budget" type="number" value="1200" min="0" step="0.01"></div>
+          <div>
+            <label class="row" style="gap:6px;align-items:center">
+              <input id="best_optk" type="checkbox" checked>
+              <span class="muted">Optimize k (respect budget)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="section">
+          <label>Actions (JSON array) or CSV with header: <span class="mono">name,uplift,cost[,pi][,base_p]</span></label>
+          <textarea id="actionsTxt" rows="8" placeholder='[
+  {"name":"SMS","uplift":0.25,"cost":0.05,"pi":0.40},
+  {"name":"Call","uplift":0.45,"cost":6.0,"pi":0.50},
+  {"name":"Televisit","uplift":0.60,"cost":12.0,"pi":0.50},
+  {"name":"TaxiVoucher","uplift":0.30,"cost":8.0,"pi":0.55}
+]'></textarea>
+          <div class="row" style="margin-top:8px">
+            <input type="file" id="actionsFile" accept=".json,.csv,application/json,text/csv" class="visually-hidden" aria-label="Upload Actions JSON or CSV">
+            <button id="btnActionsUpload" class="btn secondary" type="button">Upload Actions JSON/CSV</button>
+            <button id="btnActionsSample" class="btn secondary" type="button">Insert Sample</button>
+            <div class="spacer"></div>
+            <button id="btnBest" class="btn" type="button">Find Best Action</button>
+          </div>
+        </div>
+
+        <div id="roiBestNice" class="section hidden"></div>
+        <div id="roiBestRawWrap" class="section hidden">
+          <span class="toggle" id="toggleRoiBestRaw">Show raw JSON</span>
+          <pre id="roiBestRaw" class="out hidden"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCORE controls (single place for API key) -->
+    <div class="section">
+      <div class="row">
+        <input id="apikey" placeholder="X-API-Key (if enabled)" style="flex:1">
+        <button id="btnScore" class="btn">Score</button>
+        <button id="btnCSV" class="btn secondary" type="button" disabled>Download CSV</button>
+        <span id="hint" class="muted" style="margin-left:auto;font-size:12px">Use “Batch” to send multiple rows</span>
+      </div>
+    </div>
+
+    <!-- Scoring results -->
+    <div id="nice" class="section hidden"></div>
+
+    <!-- Raw JSON toggle (scoring) -->
+    <div id="rawWrap" class="section hidden">
+      <span class="toggle" id="toggleRaw">Show raw JSON</span>
+      <pre id="out" class="out hidden"></pre>
+    </div>
+  </div>
+
+  <script>
+    const API = ""; // empty = same origin; set base URL if needed
+    const $ = (id) => document.getElementById(id);
+
+    function getApiKey(){ return ($('apikey')?.value || '').trim(); }
+
+    // Tabs
+    const tabSingle = $('tabSingle'), tabBatch = $('tabBatch'), tabROI = $('tabROI');
+    const singleForm = $('singleForm'), batchForm = $('batchForm'), roiForm = $('roiForm');
+    function setMode(mode) {
+      [tabSingle, tabBatch, tabROI].forEach(t=>t.classList.remove('active'));
+      [singleForm, batchForm, roiForm].forEach(s=>s.classList.add('hidden'));
+      if (mode==='single'){ tabSingle.classList.add('active'); singleForm.classList.remove('hidden'); $('hint').textContent='Use “Batch” to send multiple rows'; }
+      if (mode==='batch'){ tabBatch.classList.add('active'); batchForm.classList.remove('hidden'); $('hint').textContent='Paste JSON array / CSV or upload a .json/.csv file'; }
+      if (mode==='roi'){ tabROI.classList.add('active'); roiForm.classList.remove('hidden'); $('hint').textContent='ROI is independent from scoring'; }
+      clearResults();
+    }
+    tabSingle.onclick = () => setMode('single');
+    tabBatch.onclick = () => setMode('batch');
+    tabROI.onclick = () => setMode('roi');
+
+    // ROI subtabs
+    const subSingle = $('subSingle'), subBest = $('subBest');
+    const roiSingle = $('roiSingle'), roiBest = $('roiBest');
+    function setSub(which){
+      [subSingle, subBest].forEach(s=>s.classList.remove('active'));
+      [roiSingle, roiBest].forEach(s=>s.classList.add('hidden'));
+      if (which==='single'){ subSingle.classList.add('active'); roiSingle.classList.remove('hidden'); }
+      else { subBest.classList.add('active'); roiBest.classList.remove('hidden'); }
+      // clear ROI outputs
+      ['roiSingleNice','roiBestNice'].forEach(id=>{ $(id).classList.add('hidden'); $(id).innerHTML=''; });
+      ['roiSingleRaw','roiBestRaw'].forEach(id=>{ $(id).textContent=''; $(id).classList.add('hidden'); });
+      ['roiSingleRawWrap','roiBestRawWrap'].forEach(id=>$(id).classList.add('hidden'));
+    }
+    subSingle.onclick = ()=> setSub('single');
+    subBest.onclick = ()=> setSub('best');
+
+    function clearResults(){
+      $('nice').classList.add('hidden');
+      $('nice').innerHTML = '';
+      $('rawWrap').classList.add('hidden');
+      $('out').classList.add('hidden');
+      $('out').textContent = '';
+      $('btnCSV').disabled = true;
+    }
+
+    // Healthcheck
+    $('btnPing').onclick = async () => {
+      $('status').textContent = 'status: ...';
+      try {
+        const r = await fetch((API||'') + '/ping');
+        const j = await r.json();
+        $('modelVer').textContent = 'model: ' + (j.model_version || '—');
+        $('status').textContent = 'status: ' + (j.status || r.status);
+      } catch(e) {
+        $('status').textContent = 'status: error';
+      }
+    };
+
+    // Single scoring payload
+    function payloadOne() {
+      return {
+        age: +$('age').value, weekday: +$('weekday').value, lead_time_days: +$('lead').value,
+        is_first_visit: +$('first').value, site_id: $('site').value, visit_type: $('vtype').value,
+        sms_received: +$('sms').value, scholarship: +$('sch').value, hipertension: +$('hyp').value,
+        diabetes: +$('dia').value, alcoholism: +$('alc').value, handicap: +$('hand').value,
+        gender: $('gender').value
+      };
+    }
+
+    // ===== Batch parsing (JSON & CSV, visits) =====
+    const REQUIRED_COLS = [
+      "age","weekday","lead_time_days","is_first_visit","site_id","visit_type",
+      "sms_received","scholarship","hipertension","diabetes","alcoholism","handicap","gender"
+    ];
+
+    function splitCSVLine(line, delim) {
+      const out=[]; let cur=''; let inQ=false;
+      for (let i=0;i<line.length;i++){
+        const ch=line[i];
+        if (ch === '"') {
+          if (inQ && line[i+1] === '"'){ cur+='"'; i++; }
+          else inQ = !inQ;
+        } else if (ch === delim && !inQ) { out.push(cur); cur=''; }
+        else { cur += ch; }
+      }
+      out.push(cur);
+      return out;
+    }
+
+    function normalizeVisit(o) {
+      const toInt = (v)=> v==='' || v==null ? 0 : Number(v);
+      const clip = (x,lo,hi)=> Math.max(lo, Math.min(hi, x));
+      return {
+        age: clip(toInt(o.age),0,120),
+        weekday: clip(toInt(o.weekday),0,6),
+        lead_time_days: Math.max(0, toInt(o.lead_time_days)),
+        is_first_visit: clip(toInt(o.is_first_visit),0,1),
+        site_id: String(o.site_id ?? ''),
+        visit_type: String(o.visit_type ?? 'visit'),
+        sms_received: clip(toInt(o.sms_received),0,1),
+        scholarship: clip(toInt(o.scholarship),0,1),
+        hipertension: clip(toInt(o.hipertension),0,1),
+        diabetes: clip(toInt(o.diabetes),0,1),
+        alcoholism: clip(toInt(o.alcoholism),0,1),
+        handicap: clip(toInt(o.handicap),0,1),
+        gender: String(o.gender ?? 'U').toUpperCase().slice(0,1).replace(/[^MFU]/,'U'),
+      };
+    }
+
+    function parseCSVToVisits(text) {
+      const t = text.replace(/\r/g,'');
+      const lines = t.split('\n').filter(l => l.trim()!=='');
+      if (!lines.length) throw new Error("Empty CSV");
+
+      const headLine = lines[0].replace(/^\uFEFF/, '');
+      const commas = (headLine.match(/,/g) || []).length;
+      const semis  = (headLine.match(/;/g) || []).length;
+      const delim = semis > commas ? ';' : ',';
+
+      const headers = splitCSVLine(headLine, delim).map(h=>h.replace(/^\uFEFF/,'').trim());
+      const missing = REQUIRED_COLS.filter(c => !headers.includes(c));
+      if (missing.length) throw new Error("Missing columns: " + missing.join(', '));
+
+      const rows = [];
+      for (let i=1;i<lines.length;i++){
+        const cells = splitCSVLine(lines[i], delim);
+        if (cells.length === 1 && cells[0].trim()==='') continue;
+        const obj = {};
+        headers.forEach((h,idx)=>{ obj[h] = (cells[idx] ?? '').trim(); });
+        rows.push(normalizeVisit(obj));
+      }
+      return rows;
+    }
+
+    // ✅ JSON тоже нормализуем
+    function tryParseBatchFromText(txt){
+      const s = txt.trim();
+      if (!s) throw new Error('Empty input');
+      if (s.startsWith('[') || s.startsWith('{')) {
+        const parsed = JSON.parse(s);
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        return arr.map(normalizeVisit);
+      }
+      return parseCSVToVisits(s);
+    }
+
+    // File upload (visits)
+    $('btnUpload').onclick = () => $('batchFile').click();
+    $('batchFile').addEventListener('change', async (e) => {
+      const f = e.target.files?.[0];
+      const nameEl = $('fileName');
+      nameEl.textContent = f ? `Selected: ${f.name}` : 'No file chosen';
+      if (!f) return;
+      const text = await f.text();
+      try {
+        const arr = (f.name.toLowerCase().endsWith('.csv'))
+          ? parseCSVToVisits(text)
+          : tryParseBatchFromText(text);
+        $('batch').value = JSON.stringify(arr, null, 2);
+        updateBatchInfo();
+      } catch (err) {
+        $('batch').value = '';
+        updateBatchInfo();
+        alert('Failed to load file: ' + err.message);
+      }
+    });
+
+    // Sample batch (fixed: last row has handicap)
+    $('btnSample').onclick = () => {
+      $('batch').value = `[
+  {"age":22,"weekday":1,"lead_time_days":60,"is_first_visit":1,"site_id":"S101","visit_type":"visit","sms_received":0,"scholarship":1,"hipertension":0,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"U"},
+  {"age":31,"weekday":5,"lead_time_days":45,"is_first_visit":1,"site_id":"S102","visit_type":"visit","sms_received":0,"scholarship":0,"hipertension":1,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"F"},
+  {"age":44,"weekday":2,"lead_time_days":90,"is_first_visit":1,"site_id":"S103","visit_type":"visit","sms_received":0,"scholarship":1,"hipertension":1,"diabetes":1,"alcoholism":0,"handicap":0,"gender":"M"},
+  {"age":27,"weekday":0,"lead_time_days":21,"is_first_visit":1,"site_id":"S104","visit_type":"visit","sms_received":0,"scholarship":1,"hipertension":0,"diabetes":0,"alcoholism":1,"handicap":0,"gender":"F"},
+  {"age":38,"weekday":6,"lead_time_days":120,"is_first_visit":1,"site_id":"S105","visit_type":"visit","sms_received":0,"scholarship":0,"hipertension":1,"diabetes":0,"alcoholism":0,"handicap":1,"gender":"M"},
+  {"age":60,"weekday":3,"lead_time_days":75,"is_first_visit":1,"site_id":"S106","visit_type":"visit","sms_received":0,"scholarship":0,"hipertension":1,"diabetes":1,"alcoholism":0,"handicap":0,"gender":"F"},
+
+  {"age":29,"weekday":4,"lead_time_days":14,"is_first_visit":0,"site_id":"S201","visit_type":"visit","sms_received":1,"scholarship":1,"hipertension":0,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"M"},
+  {"age":52,"weekday":2,"lead_time_days":10,"is_first_visit":0,"site_id":"S202","visit_type":"visit","sms_received":0,"scholarship":0,"hipertension":1,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"F"},
+  {"age":36,"weekday":1,"lead_time_days":18,"is_first_visit":0,"site_id":"S203","visit_type":"visit","sms_received":1,"scholarship":0,"hipertension":0,"diabetes":1,"alcoholism":0,"handicap":0,"gender":"U"},
+
+  {"age":41,"weekday":3,"lead_time_days":3,"is_first_visit":0,"site_id":"S301","visit_type":"visit","sms_received":1,"scholarship":0,"hipertension":0,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"F"},
+  {"age":55,"weekday":5,"lead_time_days":2,"is_first_visit":0,"site_id":"S302","visit_type":"visit","sms_received":1,"scholarship":0,"hipertension":1,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"M"},
+  {"age":33,"weekday":4,"lead_time_days":0,"is_first_visit":0,"site_id":"S303","visit_type":"visit","sms_received":1,"scholarship":0,"hipertension":0,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"F"},
+  {"age":70,"weekday":6,"lead_time_days":1,"is_first_visit":0,"site_id":"S304","visit_type":"visit","sms_received":1,"scholarship":0,"hipertension":1,"diabetes":1,"alcoholism":0,"handicap":1,"gender":"M"},
+  {"age":25,"weekday":2,"lead_time_days":4,"is_first_visit":0,"site_id":"S305","visit_type":"visit","sms_received":1,"scholarship":1,"hipertension":0,"diabetes":0,"alcoholism":0,"handicap":0,"gender":"U"}
+]`;
+      updateBatchInfo();
+    };
+
+    function updateBatchInfo() {
+      const el = $('batch');
+      const info = $('batchInfo');
+      try {
+        const txt = el.value.trim();
+        if (!txt) { info.textContent = 'Rows in batch: —'; return; }
+        let arr;
+        try {
+          arr = JSON.parse(txt);
+          if (!Array.isArray(arr)) arr = [arr];
+        } catch {
+          arr = parseCSVToVisits(txt);
+        }
+        info.textContent = `Rows in batch: ${arr.length}`;
+      } catch {
+        info.textContent = 'Error: invalid JSON/CSV';
+      }
+    }
+    $('batch').addEventListener('input', updateBatchInfo);
+
+    // CSV export (scoring results)
+    function toCSV(rows){
+      const header = Object.keys(rows[0] || {});
+      const esc = (v)=> `"${String(v??'').replace(/"/g,'""')}"`;
+      const lines = [header.join(',')];
+      for (const r of rows){ lines.push(header.map(k=>esc(r[k])).join(',')); }
+      return lines.join('\n');
+    }
+    function download(filename, text){
+      const blob = new Blob([text], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // Pretty renderer (scoring)
+    function renderPretty(j, modelHeader){
+      const nice = $('nice');
+      const results = Array.isArray(j?.results) ? j.results.slice() : [];
+      const n = results.length;
+      const meta = j?.meta || {};
+      const k = meta?.k_percent ?? null;
+      const thr = (typeof meta?.threshold_in_batch === 'number') ? meta.threshold_in_batch : null;
+      const selected = meta?.selected_n ?? 0;
+      const ts = j?.timestamp ? new Date(j.timestamp*1000) : null;
+      const sig = j?.signature || '—';
+
+      results.sort((a,b)=>{
+        if ('rank' in a || 'rank' in b) return (a.rank??1e9) - (b.rank??1e9);
+        return (b.proba_no_show||0) - (a.proba_no_show||0);
+      });
+
+      const summary =
+        `<div class="res-head">
+           <span class="badge">rows: ${n}</span>
+           <span class="badge">selected: ${selected}${k!=null?` (${k}% top-K)`:''}</span>
+           <span class="badge">threshold: ${thr!=null? (thr*100).toFixed(2)+'%':'—'}</span>
+           <span class="badge mono">signature: ${sig}</span>
+           ${ts?`<span class="badge">time: ${ts.toLocaleString()}</span>`:''}
+           ${modelHeader?`<span class="badge">model: ${modelHeader}</span>`:''}
+         </div>`;
+
+      const head =
+        `<thead><tr>
+           <th>#</th>
+           <th>Rank</th>
+           <th>Probability (no-show)</th>
+           <th>Bar</th>
+           <th>Target?</th>
+         </tr></thead>`;
+
+      const rowsHtml = results.map((r,idx)=>{
+        const p = Number(r.proba_no_show||0);
+        const pct = (p*100).toFixed(2)+'%';
+        const bar = `<div class="pbar"><div class="pfill" style="width:${Math.max(0, Math.min(100, p*100))}%;"></div></div>`;
+        const tag = r.is_target ? `<span class="chip ok">Top-K</span>` : `<span class="chip muted">—</span>`;
+        const hiClass = (thr!=null && p>=thr) ? 'highlight' : '';
+        return `<tr class="${hiClass}"><td class="mono">${idx+1}</td><td>${r.rank ?? '—'}</td><td class="mono">${pct}</td><td style="min-width:160px">${bar}</td><td>${tag}</td></tr>`;
+      }).join('');
+
+      const table = `<table>${head}<tbody>${rowsHtml}</tbody></table>`;
+
+      const csvRows = results.map((r,idx)=>({
+        index: idx+1,
+        rank: r.rank ?? '',
+        proba_no_show: (Number(r.proba_no_show||0)).toFixed(6),
+        proba_percent: ((Number(r.proba_no_show||0))*100).toFixed(2),
+        is_target: r.is_target ? 1 : 0
+      }));
+      $('btnCSV').onclick = ()=> download('trialflow_results.csv', toCSV(csvRows));
+      $('btnCSV').disabled = (results.length===0);
+
+      nice.innerHTML = summary + table;
+      nice.classList.remove('hidden');
+
+      $('rawWrap').classList.remove('hidden');
+      const raw = $('out');
+      const toggle = $('toggleRaw');
+      raw.textContent = JSON.stringify(j, null, 2);
+      raw.classList.add('hidden');
+      toggle.textContent = 'Show raw JSON';
+      toggle.onclick = ()=>{
+        const hidden = raw.classList.toggle('hidden');
+        toggle.textContent = hidden ? 'Show raw JSON' : 'Hide raw JSON';
+      };
+    }
+
+    // Submit (scoring)
+    $('btnScore').onclick = async () => {
+      const useBatch = tabBatch.classList.contains('active');
+      const headers = {"Content-Type": "application/json"};
+      const key = getApiKey(); if (key) headers["X-API-Key"] = key;
+
+      const k = useBatch ? +$('ktopBatch').value : +$('ktop').value;
+      const url = (API||'') + '/score' + (k ? ('?k=' + k) : '');
+
+      let bodyStr = '';
+      if (useBatch) {
+        let arr;
+        try {
+          arr = tryParseBatchFromText($('batch').value);
+          if (!Array.isArray(arr) || arr.length===0) throw new Error('Empty batch');
+        } catch(e){
+          clearResults();
+          $('out').textContent='Error: invalid JSON/CSV in batch';
+          $('rawWrap').classList.remove('hidden'); $('out').classList.remove('hidden');
+          return;
+        }
+        bodyStr = JSON.stringify(arr);
+      } else {
+        bodyStr = JSON.stringify(payloadOne());
+      }
+
+      $('btnScore').disabled = true;
+      try {
+        const r = await fetch(url, {method:'POST', headers, body: bodyStr});
+        const txt = await r.text();
+        if (!r.ok) {
+          clearResults();
+          $('out').textContent = `HTTP ${r.status} — ${r.statusText}\n` + (txt || '');
+          $('rawWrap').classList.remove('hidden'); $('out').classList.remove('hidden');
+          return;
+        }
+        let j; try { j = JSON.parse(txt); } catch {
+          clearResults(); $('out').textContent = txt || 'Non-JSON response';
+          $('rawWrap').classList.remove('hidden'); $('out').classList.remove('hidden'); return;
+        }
+        renderPretty(j, r.headers.get('X-Model-Version') || '');
+      } catch (e) {
+        clearResults();
+        $('out').textContent = 'Network error: ' + e;
+        $('rawWrap').classList.remove('hidden');
+        $('out').classList.remove('hidden');
+      } finally {
+        $('btnScore').disabled = false;
+      }
+    };
+
+    // ===================== ROI / ENB (client-side) =====================
+
+    function numOrNull(v){ const x = String(v??'').trim(); return x==='' ? null : Number(x); }
+    function clamp01(x){ return Math.max(0, Math.min(1, Number(x||0))); }
+    function euro(n){ return (Number(n)||0).toFixed(2) + ' €'; }
+    function roiX(benefit, spend){
+      if (spend <= 0){ return benefit>0 ? '∞' : '0.00x'; }
+      return (benefit/spend).toFixed(2) + 'x';
+    }
+
+    function computeENBLocal({n,L,cost,uplift,pi,base_p,budget,optimize_k,k}){
+      const p_eff = (pi!=null ? Number(pi) : (base_p!=null ? Number(base_p) : null));
+      if (p_eff==null) throw new Error('Provide either pi or base_p');
+      const per_target_nb = p_eff * uplift * L - cost;
+
+      let k_used = 0, targeted = 0, spend = 0, benefit = 0, enb = 0;
+
+      if (optimize_k){
+        if (per_target_nb <= 0){
+          k_used = 0; targeted = 0; spend=0; benefit=0; enb=0;
+        } else {
+          if (budget!=null && cost>0){
+            targeted = Math.min(n, Math.floor(budget / cost));
+          } else {
+            targeted = n; // no budget limit (or zero cost)
+          }
+          k_used = n>0 ? targeted / n : 0;
+          spend = targeted * cost;
+          benefit = targeted * p_eff * uplift * L;
+          enb = benefit - spend;
+        }
+      } else {
+        k_used = clamp01(k);
+        targeted = Math.round(n * k_used);
+        spend = targeted * cost;
+        benefit = targeted * p_eff * uplift * L;
+        enb = benefit - spend;
+      }
+      const roi_x = roiX(benefit, spend);
+      return { p_eff, per_target_nb, k_used, targeted, spend, benefit, enb, roi_x };
+    }
+
+    // Single Action UI
+    $('roi_optk').addEventListener('change', (e)=>{ $('roi_k').disabled = e.target.checked; });
+    $('roi_k').disabled = $('roi_optk').checked;
+
+    $('btnENB').onclick = () => {
+      try{
+        const n = +$('roi_n').value;
+        const L = +$('roi_L').value;
+        const cost = +$('roi_cost').value;
+        const uplift = +$('roi_uplift').value;
+        const pi = numOrNull($('roi_pi').value);
+        const base_p = numOrNull($('roi_base').value);
+        const budget = numOrNull($('roi_budget').value);
+        const optimize_k = $('roi_optk').checked;
+        const k = optimize_k ? null : numOrNull($('roi_k').value);
+
+        const j = computeENBLocal({n,L,cost,uplift,pi,base_p,budget,optimize_k,k});
+
+        const nice = $('roiSingleNice');
+        const boxes = [
+          {h:'Effective p (p_eff)', v: (j.p_eff ?? 0).toFixed(4)},
+          {h:'Per-target NB', v: euro(j.per_target_nb)},
+          {h:'k* (share targeted)', v: (j.k_used ?? 0).toFixed(4)},
+          {h:'Targeted visits', v: String(j.targeted ?? 0)},
+          {h:'Spend', v: euro(j.spend ?? 0)},
+          {h:'Benefit saved', v: euro(j.benefit ?? 0)},
+          {h:'ENB (period)', v: euro(j.enb ?? 0)},
+          {h:'ROI (benefit/cost)', v: j.roi_x},
+        ];
+        nice.innerHTML =
+          `<div class="res-head">
+             <span class="badge">Mode: Single Action (local)</span>
+             <span class="badge mono">n=${n}</span>
+             <span class="badge mono">L=${L}€</span>
+             <span class="badge mono">uplift=${(+$('roi_uplift').value).toFixed(4)}</span>
+             <span class="badge mono">cost=${(+$('roi_cost').value).toFixed(2)}€</span>
+             ${budget!=null?`<span class="badge mono">budget=${(+$('roi_budget').value).toFixed(2)}€</span>`:''}
+           </div>
+           <div class="kv">${boxes.map(b=>`<div class="box"><div class="h">${b.h}</div><div class="mono">${b.v}</div></div>`).join('')}</div>`;
+        nice.classList.remove('hidden');
+
+        // Raw JSON
+        $('roiSingleRawWrap').classList.remove('hidden');
+        const raw = $('roiSingleRaw');
+        const toggle = $('toggleRoiSingleRaw');
+        raw.textContent = JSON.stringify({inputs:{n,L,cost,uplift,pi,base_p,budget,optimize_k,k}, result:j}, null, 2);
+        raw.classList.add('hidden');
+        toggle.textContent = 'Show raw JSON';
+        toggle.onclick = ()=>{
+          const hidden = raw.classList.toggle('hidden');
+          toggle.textContent = hidden ? 'Show raw JSON' : 'Hide raw JSON';
+        };
+      }catch(err){
+        alert(err.message||String(err));
+      }
+    };
+
+    // ===== Best Action (client-side) =====
+    function parseActionsCSV(text){
+      const t = text.replace(/\r/g,'');
+      const lines = t.split('\n').filter(l => l.trim()!=='');
+      if (!lines.length) throw new Error("Empty CSV");
+      const headLine = lines[0].replace(/^\uFEFF/, '');
+      const commas = (headLine.match(/,/g) || []).length;
+      const semis  = (headLine.match(/;/g) || []).length;
+      const delim = semis > commas ? ';' : ',';
+      const headers = splitCSVLine(headLine, delim).map(h=>h.replace(/^\uFEFF/,'').trim());
+      const required = ['name','uplift','cost'];
+      const missing = required.filter(c => !headers.includes(c));
+      if (missing.length) throw new Error("Missing columns: " + missing.join(', '));
+      const rows=[];
+      for (let i=1;i<lines.length;i++){
+        const cells = splitCSVLine(lines[i], delim);
+        if (cells.length === 1 && cells[0].trim()==='') continue;
+        const obj = {};
+        headers.forEach((h,idx)=>{ obj[h] = (cells[idx] ?? '').trim(); });
+        rows.push({
+          name: String(obj.name||'').trim(),
+          uplift: Number(obj.uplift),
+          cost: Number(obj.cost),
+          pi: obj.pi!==undefined && obj.pi!=='' ? Number(obj.pi) : null,
+          base_p: obj.base_p!==undefined && obj.base_p!=='' ? Number(obj.base_p) : null,
+        });
+      }
+      return rows;
+    }
+    function tryParseActions(text){
+      const s = text.trim();
+      if (!s) throw new Error('Empty actions');
+      if (s.startsWith('[') || s.startsWith('{')){
+        const arr = JSON.parse(s);
+        return Array.isArray(arr) ? arr : [arr];
+      }
+      return parseActionsCSV(s);
+    }
+    $('btnActionsUpload').onclick = ()=> $('actionsFile').click();
+    $('actionsFile').addEventListener('change', async (e)=>{
+      const f = e.target.files?.[0];
+      if (!f) return;
+      const txt = await f.text();
+      try{
+        const arr = f.name.toLowerCase().endsWith('.csv') ? parseActionsCSV(txt) : tryParseActions(txt);
+        $('actionsTxt').value = JSON.stringify(arr, null, 2);
+      }catch(err){
+        alert('Failed to parse actions file: ' + err.message);
+      }
+    });
+    $('btnActionsSample').onclick = ()=>{
+      $('actionsTxt').value = `[
+  {"name":"SMS","uplift":0.25,"cost":0.05,"pi":0.40},
+  {"name":"Call","uplift":0.45,"cost":6.0,"pi":0.50},
+  {"name":"Televisit","uplift":0.60,"cost":12.0,"pi":0.50},
+  {"name":"TaxiVoucher","uplift":0.30,"cost":8.0,"pi":0.55}
+]`;
+    };
+
+    function computeBestActionLocal({n,L,pi,base_p,budget,optimize_k,actions}){
+      const scored = actions.map(a=>{
+        const p_eff = (a.pi!=null) ? Number(a.pi) : (pi!=null ? Number(pi) : (a.base_p!=null ? Number(a.base_p) : (base_p!=null ? Number(base_p) : null)));
+        const uplift = Number(a.uplift||0);
+        const cost = Number(a.cost||0);
+        const per_target_nb = (p_eff ?? 0) * uplift * L - cost;
+        return { name: a.name||'—', p_eff, uplift, cost, per_target_nb };
+      }).sort((x,y)=> y.per_target_nb - x.per_target_nb);
+
+      const best = scored[0] || {name:'—',p_eff:0,uplift:0,cost:0,per_target_nb:-Infinity};
+      let k_used=0, targeted=0, spend=0, benefit=0, enb=0;
+      if (best.per_target_nb > 0){
+        if (optimize_k){
+          if (budget!=null && best.cost>0){
+            targeted = Math.min(n, Math.floor(budget / best.cost));
+          } else {
+            targeted = n;
+          }
+          k_used = n>0 ? targeted/n : 0;
+        } else {
+          // If not optimizing k in "best action" page, default to all (can be extended to user k input if needed)
+          targeted = n;
+          k_used = 1;
+        }
+        spend = targeted * best.cost;
+        benefit = targeted * (best.p_eff ?? 0) * best.uplift * L;
+        enb = benefit - spend;
+      }
+      const roi_x = roiX(benefit, spend);
+      return { best_action: best.name, per_target_nb: best.per_target_nb, k_used, targeted, spend, benefit, enb, roi_x, scored };
+    }
+
+    $('btnBest').onclick = () => {
+      try{
+        const n = +$('best_n').value;
+        const L = +$('best_L').value;
+        const pi = numOrNull($('best_pi').value);
+        const base_p = numOrNull($('best_base').value);
+        const budget = numOrNull($('best_budget').value);
+        const optimize_k = $('best_optk').checked;
+        let actions;
+        try{ actions = tryParseActions($('actionsTxt').value); }
+        catch(err){ alert('Invalid actions JSON/CSV: ' + err.message); return; }
+        if (!Array.isArray(actions) || actions.length===0){ alert('Actions list is empty'); return; }
+
+        const j = computeBestActionLocal({n,L,pi,base_p,budget,optimize_k,actions});
+
+        const nice = $('roiBestNice');
+        const boxes = [
+          {h:'Best action', v: j.best_action ?? '—'},
+          {h:'Per-target NB', v: euro(j.per_target_nb)},
+          {h:'k* (share targeted)', v: (j.k_used ?? 0).toFixed(4)},
+          {h:'Targeted visits', v: String(j.targeted ?? 0)},
+          {h:'Spend', v: euro(j.spend ?? 0)},
+          {h:'Benefit saved', v: euro(j.benefit ?? 0)},
+          {h:'ENB (period)', v: euro(j.enb ?? 0)},
+          {h:'ROI (benefit/cost)', v: j.roi_x},
+        ];
+
+        const head = `<thead><tr><th>Action</th><th>p_eff</th><th>Uplift</th><th>Cost (€)</th><th>Per-target NB (€)</th></tr></thead>`;
+        const body = '<tbody>' + j.scored.map(row=>{
+          const hi = (row.name === (j.best_action||'')) ? 'class="highlight"' : '';
+          return `<tr ${hi}><td>${row.name}</td><td class="mono">${(row.p_eff??0).toFixed(4)}</td><td class="mono">${(row.uplift??0).toFixed(4)}</td><td class="mono">${(row.cost??0).toFixed(2)}</td><td class="mono">${(row.per_target_nb??0).toFixed(2)}</td></tr>`;
+        }).join('') + '</tbody>';
+        const compareTable = `<table>${head}${body}</table>`;
+
+        nice.innerHTML =
+          `<div class="res-head">
+             <span class="badge">Mode: Best Action (local)</span>
+             <span class="badge mono">n=${n}</span>
+             <span class="badge mono">L=${L}€</span>
+             ${budget!=null?`<span class="badge mono">budget=${(+$('best_budget').value).toFixed(2)}€</span>`:''}
+           </div>
+           <div class="kv">${boxes.map(b=>`<div class="box"><div class="h">${b.h}</div><div class="mono">${b.v}</div></div>`).join('')}</div>
+           <div class="section">${compareTable}</div>`;
+        nice.classList.remove('hidden');
+
+        // Raw JSON
+        $('roiBestRawWrap').classList.remove('hidden');
+        const raw = $('roiBestRaw');
+        const toggle = $('toggleRoiBestRaw');
+        raw.textContent = JSON.stringify({inputs:{n,L,pi,base_p,budget,optimize_k}, result:{
+          best_action:j.best_action, per_target_nb:j.per_target_nb, k_used:j.k_used, targeted:j.targeted,
+          spend:j.spend, benefit:j.benefit, enb:j.enb, roi_x:j.roi_x, scored:j.scored
+        }}, null, 2);
+        raw.classList.add('hidden');
+        toggle.textContent = 'Show raw JSON';
+        toggle.onclick = ()=>{
+          const hidden = raw.classList.toggle('hidden');
+          toggle.textContent = hidden ? 'Show raw JSON' : 'Hide raw JSON';
+        };
+      }catch(err){
+        alert(err.message||String(err));
+      }
+    };
+  </script>
+</body>
+</html>

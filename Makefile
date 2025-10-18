@@ -1,4 +1,4 @@
-.PHONY: install lint fmt test data train eval app api
+.PHONY: install lint fmt test data train api #app eval
 
 install:
 	pip install -r requirements.txt
@@ -16,16 +16,14 @@ test:
 	pytest -q
 
 data:
-	python src/trialflow/ingest_fhir.py
+	python src/trialflow/ingest_kaggle.py
 
 train:
-	python src/trialflow/train.py
+	python src/trialflow/train_baseline.py
 
-eval:
-	python src/trialflow/evaluate.py
+#eval: python src/trialflow/evaluate.py
 
-app:
-	streamlit run src/trialflow/app_demo.py
+#app: streamlit run src/trialflow/app_demo.py
 
 api:
-	uvicorn src.trialflow.serve:app --reload
+	uvicorn src.trialflow.api:app --reload
