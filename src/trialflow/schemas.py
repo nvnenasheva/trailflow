@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional #, Union
 
 class Visit(BaseModel):
     age: int = Field(ge=0, le=120)
