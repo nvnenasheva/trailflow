@@ -3,7 +3,7 @@ jupyter
 nbconvert
 pandas
 numpy
-scikit-learn>=1.4,<1.7 # for CalibratedClassifierCV
+scikit-learn==1.6.1 # for CalibratedClassifierCV
 lightgbm
 xgboost
 optuna
