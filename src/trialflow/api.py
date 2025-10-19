@@ -6,7 +6,7 @@
 from fastapi import FastAPI, Depends, Query, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from typing import List, Union
+from typing import List, Union, Optional
 import time
 import os
 
@@ -30,7 +30,11 @@ def ping():
     return {"status": "ok", "model_version": get_version()}
 
 @app.post("/score", response_model=ScoreResponse, dependencies=[Depends(require_api_key)])
-def score(payload: Union[Visit, List[Visit]], k: int = Query(0, ge=0, le=100), response: Response = None):
+def score(
+    payload: Union[Visit, List[Visit]],
+    k: int = Query(0, ge=0, le=100),
+    response: Optional[Response] = None
+):
     results, meta = score_visits(payload, k_percent=k)
     if response is not None:
         response.headers["X-Model-Version"] = meta.get("model_version", "")
