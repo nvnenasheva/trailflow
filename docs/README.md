@@ -28,6 +28,119 @@ TrailFlow is useful anywhere missed visits create **regulatory risk, extra cost,
 
 Use it for T-48/T-24 pre-visit triage, budget-limited outreach campaigns, and pilots that need a measurable **ROI/ENB**.
 
+## User guide
+### Download & Setup
+1. Clone the repository
+```bash
+# clone
+git clone https://github.com/<owner>/<repo>.git trailflow
+cd trailflow
+```
+2. Set dependencies
+```bash
+# macOS / Linux
+python3 -m venv .venv && source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+#TODO save model in the .skops
+# pip install skops
+#TODO model placed in .joblib, learned using sklearn 1.6.1:
+#pip install scikit-learn==1.6.1
+```
+3. Create `.env`
+```bash
+# currently you do not need to use API_KEY, but for the future:
+# API_KEY=request from @nvnenasheva
+MODEL_PATH=models/baseline_calibrated.pkl  # your path to the file with the model
+```
+
+### Execution
+
+#### Start
+
+```bash
+uvicorn src.trialflow.api:app --host 0.0.0.0 --port 8000 --workers 1 --env-file .env 
+```
+Then you should follow the provided link to the UI interface, for example, `http://127.0.0.1:8000/`
+
+#### Smoke check
+
+```bash
+curl http://localhost:8000/ping
+curl -X POST "http://localhost:8000/score?k=0" \
+  -H "Content-Type: application/json" -H "X-API-Key: dev-key" \
+  -d '{"visit_id":"v1","age":56,"gender":"F","lead_time_days":3,"weekday":2,"is_first_visit":0,"sms_received":0}'
+```
+### Quick start with make
+> [!NOTE]
+> Requires **GNU Make** (macOS/Linux: preinstalled; Windows: use Git Bash or WSL).
+
+**Typical workflow**
+```bash
+make install   # install deps + pre-commit hooks
+make lint      # ruff + mypy
+make test      # run unit tests
+make api       # start FastAPI locally
+```
+
+**All targets**
+
+* `make install`
+  Install runtime/dev dependencies from `requirements.txt`, plus `pre-commit`, `ruff`, `mypy`, `pytest`. Enables Git hooks (`pre-commit install`).
+
+* `make lint`
+  Run style and type checks: `ruff check src tests` and `mypy src`.
+
+* `make fmt`
+  Auto-fix style issues where possible: `ruff check --fix src tests`.
+
+* `make test`
+  Run tests quietly with PyTest: `pytest -q`.
+
+* `make data`
+  Fetch/prepare sample data: `python src/trialflow/ingest_kaggle.py`.
+
+* `make train`
+  Train the baseline model: `python src/trialflow/train_baseline.py` (artifacts typically go to `models/`).
+
+* `make api`
+  Launch the API in dev mode: `uvicorn src.trialflow.api:app --reload`
+  * UI: `http://localhost:8000/ui`
+  * Ping: `http://localhost:8000/ping`
+  * Docs: `http://localhost:8000/docs`
+
+> [!NOTE]
+> * Before `make api`, set your env (or `.env`): at least `API_KEY` and `MODEL_PATH`.
+> * Run commands from the **repo root**. If you hit import errors, ensure your venv is active; in some setups you may need `pip install -e .` or set `PYTHONPATH=src`.
+> * `pre-commit` hooks run on `git commit`. If you don’t use Git locally, you can ignore them.
+
+
+### Expose local API with ngrok (public URL)
+
+#### Installation and log in
+```bash
+# macOS (brew)
+brew install ngrok/ngrok/ngrok
+# Windows
+choco install ngrok
+
+# log in
+ngrok config add-authtoken <YOUR_NGROK_AUTHTOKEN>
+```
+#### Run API locally
+Get back to the **Start** section (`unicorn` execution)
+
+#### Run `ngrok` (at the same time as the previous step, but separate bash window)
+```bash
+ngrok http 8000 --basic-auth "demo:demo12345" 
+```
+Then you should see the public HTTP address:
+```bash
+Forwarding  https://<random-id>.ngrok-free.app -> http://localhost:8000
+```
+
+
+
 ## Overview
 
 TrailFlow has **two layers** that work together:
