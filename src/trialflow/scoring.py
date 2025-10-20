@@ -14,7 +14,7 @@ def _to_dataframe(visits: List[Visit]) -> pd.DataFrame:
 def score_visits(payload: Union[Visit, List[Visit]], k_percent: int = 0) -> Tuple[List[ScoreItem], dict]:
     visits = payload if isinstance(payload, list) else [payload]
     df = _to_dataframe(visits)
-    proba = predict_proba_df(df)  # ← тут зовём реальную модель
+    proba = predict_proba_df(df)  # зовём реальную модель
     items = [ScoreItem(proba_no_show=float(p)) for p in proba]
 
     # сортировка + ранги
