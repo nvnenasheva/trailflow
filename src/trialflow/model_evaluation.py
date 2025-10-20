@@ -1,6 +1,8 @@
 # python model_evaluation.py --model models/model.skops --save_csv reports/coef_or.csv
-import argparse, joblib, numpy as np, re
-from pathlib import Path
+import argparse
+import joblib
+import numpy as np
+import re
 
 def load_model(path):
     if str(path).endswith(".skops"):
