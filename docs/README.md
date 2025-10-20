@@ -4,7 +4,7 @@
 
 TrailFlow is a lightweight, end-to-end system for reducing **missed/late visits** in clinical studies. 
 
-It combines a **calibrated risk model** (predicts no-show probability per visit) with a **business policy layer** that recommends **low-cost actions** (SMS, call, reschedule, voucher) under **budget and operational constraints**. The project ships with a FastAPI **/score** endpoint and a small web UI (Single Visit, Batch, ROI/ENB) for triage and planning. It’s **model-agnostic** (baseline: calibrated logistic regression), **transparent** (clear formulas, versioned decisions), and easy to integrate via **JSON/CSV**—ideal for pilots, demos, and production hand-offs.
+It combines a **calibrated risk model** (predicts no-show probability per visit) with a **business policy layer** that recommends **low-cost actions** (SMS, call, reschedule, voucher) under **budget and operational constraints**. The project ships with a FastAPI **/score** endpoint and a small web UI (Single Visit, Batch, ROI/ENB) for triage and planning. It’s **model-agnostic** (baseline: calibrated logistic regression), **transparent** (clear formulas, versioned decisions), and easy to integrate via **JSON/CSV** -- ideal for pilots, demos, and production hand-offs.
 
 ## Why this matters
 
