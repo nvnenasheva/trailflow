@@ -21,7 +21,7 @@ TrailFlow is useful anywhere missed visits create **regulatory risk, extra cost,
 **Why it’s valuable**
 
 * Moves from “optimize AUC” to **optimize euros**:
-  ( \mathrm{ENB}_{i,a}=L\cdot p_i\cdot \mathrm{uplift}_a-\mathrm{cost}_a ) → plan that maximizes total ENB under **budget and caps**.
+  ${ENB}_{i,a}= L * p_i * uplift_a - cost_a$ --> plan that maximizes total ENB under **budget and caps**.
 * **Calibrated probabilities** → trustworthy money estimates and safer decisions.
 * **Transparent & governable**: clear formulas, thresholds, and logs suitable for QA and compliance.
 * **Small lift to adopt**: works with a single visit or a batch; start with one action (e.g., SMS) and scale to multiple actions when ready.
@@ -36,11 +36,8 @@ TrailFlow has **two layers** that work together:
    A calibrated model predicts the **no-show probability** for each upcoming visit. You can score a **single visit** (for quick checks) or a **batch** (JSON/CSV) to triage a list and mark the Top-K% highest-risk cases. Because we calibrate the model, the probability (p_i) approximates the true frequency — which lets us convert risk into money.
 
 2. **Business impact & decision policy.**
-   Given the loss per missed visit (L), the **cost** and expected **uplift** (risk reduction) of an action, we compute **Expected Net Benefit**:
-   [
-   \mathrm{ENB}_{i,a} = L \cdot p_i \cdot \mathrm{uplift}_a - \mathrm{cost}_a.
-   ]
-   We then choose **whom to target** and, optionally, **which action** (SMS / call / voucher / reschedule) to apply so that period ENB is **maximized** under your **budget** and operational caps (contact limits, quiet hours). Outputs include a transparent target plan plus **Spend**, **Benefit**, **ENB**, and **ROI**.
+   Given the loss per missed visit (L), the **cost** and expected **uplift** (risk reduction) of an action, we compute **Expected Net Benefit**: ${ENB}_{i,a}= L * p_i * uplift_a - cost_a$
+   We then choose **whom to target** and, optionally, **which action** (SMS/call/voucher/reschedule) to apply so that period ENB is **maximized** under your **budget** and operational caps (contact limits, quiet hours). Outputs include a transparent target plan plus **Spend**, **Benefit**, **ENB**, and **ROI**.
 
 **Why it matters:** we don’t optimize AUC in isolation — we optimize **euro impact**. Accurate, calibrated probabilities drive better targeting; the ENB layer turns those probabilities into concrete savings and a plan you can execute.
 
@@ -79,7 +76,7 @@ Single-visit mode provides a fast, inspectable way to validate inputs, explain o
 
 <img width="971" height="761" alt="image" src="https://github.com/user-attachments/assets/bd114090-ee4d-44ab-8ba8-dfefb865a971" />
 
-### Group of visits - Batch (JSON / CSV)
+### Group of visits - Batch (JSON/CSV)
 
 Score a batch of upcoming visits and auto-select the highest-risk cases.
 
@@ -91,18 +88,18 @@ Score a batch of upcoming visits and auto-select the highest-risk cases.
 2. Set **Top-K% within batch** (e.g., `30`). The UI will mark the top-K% visits by predicted no-show probability as **Target**.
 3. Click **Score**. The table shows for each row:
 
-   * **Rank** — position by risk (descending)
-   * **Probability (no-show)** — calibrated model probability
-   * **Bar** — visual risk meter
-   * **Target?** — whether the row is in the current Top-K
+   * **Rank** - position by risk (descending)
+   * **Probability (no-show)** - calibrated model probability
+   * **Bar** - visual risk meter
+   * **Target?** - whether the row is in the current Top-K
 4. Use **Download CSV** to export the scored batch.
 
 **Status & metadata**
 
-* `rows` — total items; `selected` — how many fell into Top-K;
-* `threshold` — minimum probability to enter Top-K for this batch;
-* `signature / time / model` — request fingerprint and model version;
-* **X-API-Key** — add if the API is protected.
+* `rows` - total items; `selected` - how many fell into Top-K;
+* `threshold` - minimum probability to enter Top-K for this batch;
+* `signature/time/model` - request fingerprint and model version;
+* **X-API-Key** - add if the API is protected.
 
 **Why this is useful**
 
@@ -120,10 +117,15 @@ We translate no-show risk into **money** and pick actions that maximize value.
 
 * For each visit (i) and action (a):
 
-  * Expected **benefit**: ( \mathrm{Benefit}_{i,a} = L \cdot p_i \cdot \mathrm{uplift}_a )
-  * **Net benefit** per action: ( \mathrm{ENB}*{i,a} = \mathrm{Benefit}*{i,a} - \mathrm{cost}_a )
-* Period totals for the selected plan:
-  ( \mathrm{Benefit}=\sum \mathrm{Benefit}_{i,a},\ \mathrm{Spend}=\sum \mathrm{cost}_a,\ \mathrm{ENB}=\mathrm{Benefit}-\mathrm{Spend},\ \mathrm{ROI}=\mathrm{Benefit}/\mathrm{Spend} ) (if Spend>0).
+  * Expected **benefit**: $ {Benefit}_{i,a} = L * p_i * uplift_a$
+  * **Net benefit** per action: ${ENB}_{i,a} = {Benefit}_{i,a} - cost_a$
+    
+**Period totals for the selected plan**
+Benefit = Σ Benefit_{i,a}
+Spend   = Σ cost_a
+ENB     = Benefit − Spend
+ROI     = Benefit / Spend   (defined if Spend > 0)
+
 
 **What we optimize**
 
