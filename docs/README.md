@@ -234,9 +234,13 @@ We translate no-show risk into **money** and pick actions that maximize value.
   * **Net benefit** per action: $ENB_{i,a} = Benefit_{i,a} - cost_a$
     
 **Period totals for the selected plan**
+
 Benefit = Σ $Benefit_{i,a}$
+
 Spend   = Σ cost_a
+
 ENB     = Benefit − Spend
+
 ROI     = Benefit / Spend   (defined if Spend > 0)
 
 
