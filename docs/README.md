@@ -33,7 +33,7 @@ Use it for T-48/T-24 pre-visit triage, budget-limited outreach campaigns, and pi
 1. Clone the repository
 ```bash
 # clone
-git clone https://github.com/<owner>/<repo>.git trailflow
+git clone https://github.com/nvnenasheva/trailflow.git trailflow
 cd trailflow
 ```
 2. Set dependencies
